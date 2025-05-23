@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup
 import base64
 import os
 from dotenv import load_dotenv
+import cloudscraper
+
 import logging
 
 load_dotenv()
@@ -61,7 +63,8 @@ def get_lyrics_from_genius(artist, title):
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
     }
-    page = requests.get(song_url, headers=page_headers)
+    scraper = cloudscraper.create_scraper()
+    page = scraper.get(song_url, headers=page_headers)
     html = BeautifulSoup(page.text, "html.parser")
 
     containers = html.find_all("div", {"data-lyrics-container": "true"})
