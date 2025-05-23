@@ -52,7 +52,12 @@ def get_lyrics_from_genius(artist, title):
     song_url = hits[0]["result"]["url"]
     logger.debug(f"Song URL: {song_url}")
 
-    page = requests.get(song_url)
+    # Add headers to mimic a real browser
+    page_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9"
+    }
+    page = requests.get(song_url, headers=page_headers)
     html = BeautifulSoup(page.text, "html.parser")
 
     containers = html.find_all("div", {"data-lyrics-container": "true"})
