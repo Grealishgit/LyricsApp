@@ -52,10 +52,14 @@ def get_lyrics_from_genius(artist, title):
     song_url = hits[0]["result"]["url"]
     logger.debug(f"Song URL: {song_url}")
 
-    # Add headers to mimic a real browser
+    # Add headers to mimic a real browser and try to bypass cloud host blocks
     page_headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9"
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Referer": "https://genius.com/",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
     }
     page = requests.get(song_url, headers=page_headers)
     html = BeautifulSoup(page.text, "html.parser")
