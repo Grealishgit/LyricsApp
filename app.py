@@ -30,7 +30,56 @@ top_artists = [
 ]
 
 # ------------------ GENIUS ------------------
+
 def get_lyrics_from_genius(artist, title):
+    logger.debug(f"Fetching lyrics for artist: {artist}, title: {title}")
+    base_url = "https://api.genius.com"
+    headers = {'Authorization': f'Bearer {GENIUS_ACCESS_TOKEN}'}
+    search_url = f"{base_url}/search"
+    params = {'q': f'{artist} {title}'}
+
+    response = requests.get(search_url, params=params, headers=headers)
+    logger.debug(f"Genius API Response: {response.status_code} - {response.text}")
+
+    if response.status_code != 200:
+        logger.error(f"Error accessing Genius API: {response.status_code}")
+        return None, "Error accessing Genius API."
+
+    hits = response.json().get("response", {}).get("hits", [])
+    if not hits:
+        return None, "Song not found on Genius."
+
+    song_url = hits[0]["result"]["url"]
+    logger.debug(f"Song URL: {song_url}")
+
+    # Use cloudscraper to bypass Genius protection
+    scraper = cloudscraper.create_scraper()
+    page_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Referer": "https://genius.com/"
+    }
+
+    try:
+        page = scraper.get(song_url, headers=page_headers)
+        if page.status_code != 200:
+            logger.warning(f"Genius lyrics page returned status {page.status_code}")
+            return None, "Lyrics page could not be loaded."
+    except Exception as e:
+        logger.error(f"Error fetching lyrics page: {e}")
+        return None, "Error fetching lyrics page."
+
+    html = BeautifulSoup(page.text, "html.parser")
+    containers = html.find_all("div", {"data-lyrics-container": "true"})
+    lyrics = "\n".join([c.get_text(separator="\n") for c in containers]) if containers else None
+
+    if lyrics:
+        logger.debug("Lyrics successfully retrieved.")
+        return lyrics.strip(), None
+    else:
+        logger.warning("Lyrics not found on Genius.")
+        return None, "Lyrics not found on Genius."
+
     logger.debug(f"Fetching lyrics for artist: {artist}, title: {title}")
     base_url = "https://api.genius.com"
     headers = {'Authorization': f'Bearer {GENIUS_ACCESS_TOKEN}'}
